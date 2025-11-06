@@ -1,15 +1,30 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { UserNav } from "@/components/ui/user-nav"
 import { Star, MapPin, Filter } from "lucide-react"
 import { DUMMY_KOS } from "@/lib/dummy-data"
 
 export default function HomePage() {
   const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female" | "mix">("all")
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null)
+
+  useEffect(() => {
+    // Load user from localStorage
+    const userStr = localStorage.getItem("currentUser")
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        setCurrentUser(user)
+      } catch (err) {
+        console.error("Failed to parse user data")
+      }
+    }
+  }, [])
 
   const filteredKos = genderFilter === "all" ? DUMMY_KOS : DUMMY_KOS.filter((k) => k.gender === genderFilter)
 
@@ -21,17 +36,7 @@ export default function HomePage() {
           <Link href="/" className="text-2xl font-bold text-blue-600">
             🏠 Kos Hunter
           </Link>
-          <nav className="flex gap-4">
-            <Link href="/auth/login" className="text-gray-600 hover:text-gray-900">
-              Login
-            </Link>
-            <Link href="/auth/register" className="text-gray-600 hover:text-gray-900">
-              Register
-            </Link>
-            <Link href="/owner/login" className="text-gray-600 hover:text-gray-900">
-              Owner Login
-            </Link>
-          </nav>
+          <UserNav user={currentUser} />
         </div>
       </header>
 
