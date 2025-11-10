@@ -44,7 +44,7 @@ export default function ProfileClient({ initialUser }: { initialUser: User }) {
   async function updateProfile(payload: { name: string; email: string; phone: string }) {
     const token = localStorage.getItem("token")
     const res = await fetch(UPDATE_API_URL, {
-      method: "POST",
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         makerID: "1",
