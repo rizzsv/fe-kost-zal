@@ -165,11 +165,13 @@ export default function FacilityManagementPage() {
   }
 
   const startEditing = (facility: FacilityItem) => {
+    console.log('🔧 Starting edit for facility:', facility)
     setEditingId(facility.id)
     setEditingName(facility.facility_name)
   }
 
   const cancelEditing = () => {
+    console.log('❌ Cancelling edit')
     setEditingId(null)
     setEditingName("")
   }

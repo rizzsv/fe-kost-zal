@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useMutation } from "@tanstack/react-query"
+import { uploadKosImage } from "@/lib/api/image-api"
 
 const API_URL = "https://learn.smktelkom-mlg.sch.id/kos/api/admin/store_kos"
 
@@ -49,18 +50,31 @@ export default function AddKostBar() {
   const mutation = useMutation({
     mutationFn: (data: { user_id: string; name: string; address: string; price_per_month: number; gender: string }) =>
       addKost(data),
-    onSuccess: () => {
+    onSuccess: async (responseData) => {
+      // If there's an image file, upload it
+      if (imageFile && responseData?.data?.id) {
+        try {
+          await uploadKosImage(responseData.data.id, imageFile)
+          alert("✅ Kos dan gambar berhasil ditambahkan!")
+        } catch (error) {
+          console.error("Error uploading image:", error)
+          alert("⚠️ Kos berhasil ditambahkan, tapi gagal upload gambar. " + (error as Error).message)
+        }
+      } else {
+        alert("✅ Kos berhasil ditambahkan!")
+      }
+      
       // Reset form after success
       setForm({ name: "", address: "", price: "", gender: "male", image: "" })
       setImageFile(null)
       setImagePreview(null)
       setOpen(false)
-      alert("Kos berhasil ditambahkan! Halaman akan dimuat ulang.")
+      
       // Reload page to show new data
       window.location.reload()
     },
     onError: (error: Error) => {
-      alert(error.message || "Gagal menambahkan kos")
+      alert("❌ " + (error.message || "Gagal menambahkan kos"))
     }
   })
 

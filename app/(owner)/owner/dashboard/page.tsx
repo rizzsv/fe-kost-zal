@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import AddKostBar from "@/components/ui/add-kost-bar"
 import EditKostModal from "@/components/ui/edit-kost-modal"
+import ManageKosImagesModal from "@/components/ui/manage-kos-images-modal"
 import { Badge } from "@/components/ui/badge"
-import { BarChart3, Users, Home, MessageSquare, LogOut, Search, RefreshCw, Settings } from "lucide-react"
+import { BarChart3, Users, Home, MessageSquare, LogOut, Search, RefreshCw, Settings, Image as ImageIcon } from "lucide-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getOwnerReviews, addOwnerReply } from "@/lib/api/review-api"
-import { fetchKosList, getKosImageUrl } from "@/lib/api/kos-api"
+import { fetchKosList, getKosImageUrl, deleteKos } from "@/lib/api/kos-api"
 import { getOwnerBookings, BookingData, updateBookingStatusByOwner } from "@/lib/api/booking-api"
 
 const API_URL = "https://learn.smktelkom-mlg.sch.id/kos/api/admin/show_kos"
@@ -48,45 +49,11 @@ async function fetchKostList(searchQuery: string = "") {
   }
 }
 
-async function deleteKost(kosId: number) {
-  const token = localStorage.getItem("token")
-  const DELETE_URL = `https://learn.smktelkom-mlg.sch.id/kostoken/api/admin/delete_kos/${kosId}`
-  
-  console.log("Deleting kos ID:", kosId)
-  console.log("Delete URL:", DELETE_URL)
-  
-  const res = await fetch(DELETE_URL, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      makerID: "1",
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
-  const text = await res.text()
-  console.log("Delete kos response:", text)
-
-  if (!res.ok) {
-    try {
-      const errorData = JSON.parse(text)
-      throw new Error(errorData.message || text || "Gagal menghapus kos")
-    } catch {
-      throw new Error(text || "Gagal menghapus kos")
-    }
-  }
-
-  try {
-    return JSON.parse(text)
-  } catch {
-    return { success: true }
-  }
-}
-
 export default function OwnerDashboardPage() {
   const [activeTab, setActiveTab] = useState("overview")
   const [searchQuery, setSearchQuery] = useState("")
   const [editingKos, setEditingKos] = useState<any>(null)
+  const [managingImagesKos, setManagingImagesKos] = useState<any>(null)
   const [selectedKosForReviews, setSelectedKosForReviews] = useState<number | null>(null)
   const [replyingTo, setReplyingTo] = useState<number | null>(null)
   const [replyText, setReplyText] = useState<Record<number, string>>({})
@@ -270,14 +237,14 @@ export default function OwnerDashboardPage() {
 
   // Delete kost mutation
   const deleteMutation = useMutation({
-    mutationFn: (kosId: number) => deleteKost(kosId),
+    mutationFn: (kosId: number) => deleteKos(kosId),
     onSuccess: () => {
-      alert("Kos berhasil dihapus!")
+      alert("✅ Kos berhasil dihapus!")
       refetch() // Refresh list after delete
     },
     onError: (error: Error) => {
       console.error("Error deleting kos:", error)
-      alert(error.message || "Gagal menghapus kos")
+      alert("❌ " + (error.message || "Gagal menghapus kos"))
     }
   })
 
@@ -1028,6 +995,16 @@ export default function OwnerDashboardPage() {
                             <Button 
                               size="sm" 
                               variant="outline"
+                              onClick={() => setManagingImagesKos(kos)}
+                              disabled={deleteMutation.status === 'pending'}
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <ImageIcon className="w-3 h-3 mr-1" />
+                              Gambar
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
                               onClick={() => setEditingKos(kos)}
                               disabled={deleteMutation.status === 'pending'}
                             >
@@ -1328,6 +1305,15 @@ export default function OwnerDashboardPage() {
         <EditKostModal
           kos={editingKos}
           onClose={() => setEditingKos(null)}
+          onSuccess={() => refetch()}
+        />
+      )}
+
+      {/* Manage Images Modal */}
+      {managingImagesKos && (
+        <ManageKosImagesModal
+          kos={managingImagesKos}
+          onClose={() => setManagingImagesKos(null)}
           onSuccess={() => refetch()}
         />
       )}

@@ -101,9 +101,9 @@ export const updateFacility = async (facilityId: number, facilityName: string): 
   }
 
   console.log('🔧 Updating facility:', { facilityId, facilityName })
-  console.log('📤 Request URL:', `${API_BASE_URL}/update_facility/${facilityId}`)
+  console.log('📤 Request URL:', `${API_BASE_URL}/admin/update_facility/${facilityId}`)
 
-  const response = await fetch(`${API_BASE_URL}/update_facility/${facilityId}`, {
+  const response = await fetch(`${API_BASE_URL}/admin/update_facility/${facilityId}`, {
     method: 'PUT',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -175,9 +175,9 @@ export const deleteFacility = async (facilityId: number): Promise<void> => {
   }
 
   console.log('🗑️ Deleting facility:', facilityId)
-  console.log('📤 Request URL:', `${API_BASE_URL}/delete_facility/${facilityId}`)
+  console.log('📤 Request URL:', `${API_BASE_URL}/admin/delete_facility/${facilityId}`)
 
-  const response = await fetch(`${API_BASE_URL}/delete_facility/${facilityId}`, {
+  const response = await fetch(`${API_BASE_URL}/admin/delete_facility/${facilityId}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`,

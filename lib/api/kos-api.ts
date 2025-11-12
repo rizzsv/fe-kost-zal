@@ -414,3 +414,55 @@ export const getKosImageUrl = (image: KosImage): string => {
   console.log('🖼️ Generated URL:', finalUrl)
   return finalUrl
 }
+
+/**
+ * Delete a kos
+ * DELETE /api/admin/delete_kos/{kosId}
+ */
+export const deleteKos = async (kosId: number): Promise<void> => {
+  const token = getAuthToken()
+  const makerId = getMakerId()
+  
+  if (!token) {
+    throw new Error('No authentication token found. Please login first.')
+  }
+  
+  // API_BASE_URL already includes /api, so just use /admin/delete_kos/{id}
+  const endpoint = `/admin/delete_kos/${kosId}`
+  const fullUrl = `${API_BASE_URL}${endpoint}`
+  
+  console.log('🗑️ Deleting kos:', { kosId, endpoint, fullUrl })
+
+  const response = await fetch(fullUrl, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'MakerID': makerId,
+      'Authorization': `Bearer ${token}`,
+    },
+  })
+
+  console.log('📥 Delete response status:', response.status)
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error('❌ Delete error:', errorText)
+    
+    try {
+      const errorData = JSON.parse(errorText)
+      throw new Error(errorData.message || errorText || 'Failed to delete kos')
+    } catch {
+      throw new Error(errorText || 'Failed to delete kos')
+    }
+  }
+
+  const text = await response.text()
+  console.log('✅ Kos deleted successfully:', text)
+  
+  // Try to parse response, but don't fail if it's empty
+  try {
+    return JSON.parse(text)
+  } catch {
+    return
+  }
+}
