@@ -62,24 +62,28 @@ export const fetchKosList = async (search?: string): Promise<KosData[]> => {
   const userRole = getUserRole()
 
   // Different strategy based on role
-  let authToken = token
+  let authToken: string | null = token
   let endpoint = '/admin/show_kos'
   
   if (userRole === 'society') {
-    // Society endpoint - sesuai dokumentasi API
+    // Society should browse ALL kos from all owners
+    // Use society endpoint WITH token to access the API
     endpoint = '/society/show_kos'
-    console.log('📖 Society browsing with society token')
+    // Keep using society token to authenticate
+    authToken = token
+    console.log('📖 Society browsing ALL kos with society token')
   } else if (userRole === 'owner') {
-    // Owner: use their own token (full access to their kos)
+    // Owner: use their own token (only see their own kos)
     if (!token) {
       throw new Error('No authentication token found. Please login first.')
     }
     endpoint = '/admin/show_kos'
-    console.log('👔 Owner accessing with personal token')
+    console.log('👔 Owner accessing their own kos with personal token')
   } else {
     // No role set - guest browsing, try society endpoint
     endpoint = '/society/show_kos'
-    console.log('👤 Guest browsing')
+    authToken = null
+    console.log('👤 Guest browsing ALL kos')
   }
 
   const url = new URL(`${API_BASE_URL}${endpoint}`)
@@ -88,7 +92,12 @@ export const fetchKosList = async (search?: string): Promise<KosData[]> => {
     url.searchParams.append('search', search)
   }
   
-  console.log('🔍 Fetching kos list:', { role: userRole, endpoint, url: url.toString() })
+  console.log('🔍 Fetching kos list:', { 
+    role: userRole, 
+    endpoint, 
+    url: url.toString(),
+    usingToken: !!authToken 
+  })
 
   const headers: HeadersInit = {
     'MakerID': makerId,
@@ -133,28 +142,43 @@ export const fetchKosList = async (search?: string): Promise<KosData[]> => {
   console.log('Has data field:', 'data' in data)
   console.log('data.data is array:', Array.isArray(data?.data))
   
+  // Check for pagination info
+  if (data.meta || data.pagination) {
+    console.log('📄 Pagination info:', data.meta || data.pagination)
+    console.log('⚠️ Warning: API uses pagination, but this function fetches only first page')
+  }
+  
+  // Check total records info
+  if (data.total) {
+    console.log('📊 Total records available:', data.total)
+  }
+  
   // Handle different response formats
   // Format 1: { status: "success", data: [...] } - API actual format
   if (data.status === "success" && Array.isArray(data.data)) {
     console.log('✅ Using Format 1: { status: "success", data: [...] }')
+    console.log('📦 Fetched', data.data.length, 'kos records')
     return data.data
   }
   
   // Format 2: { success: true, data: [...] }
   if (data.success === true && Array.isArray(data.data)) {
     console.log('✅ Using Format 2: { success: true, data: [...] }')
+    console.log('📦 Fetched', data.data.length, 'kos records')
     return data.data
   }
   
   // Format 3: { data: [...] } (without success/status field)
   if (Array.isArray(data.data)) {
     console.log('✅ Using Format 3: { data: [...] }')
+    console.log('📦 Fetched', data.data.length, 'kos records')
     return data.data
   }
   
   // Format 4: Direct array [...]
   if (Array.isArray(data)) {
     console.log('✅ Using Format 4: Direct array')
+    console.log('📦 Fetched', data.length, 'kos records')
     return data
   }
   
